@@ -28,15 +28,15 @@ static inline dispatch_queue_priority_t NSQualityOfServiceToDispatchPriority(NSQ
 
 static inline qos_class_t NSQualityOfServiceToQOSClass(NSQualityOfService qos) {
     switch (qos) {
-            // 和图形处理相关的任务，比如滚动和动画
+            // 和图形处理相关的任务，比如滚动和动画  最高
         case NSQualityOfServiceUserInteractive: return QOS_CLASS_USER_INTERACTIVE;
-            // 用户请求的任务，但是不需要精确到毫秒级。例如如果用户请求打开电子邮件App来查看邮件
+            // 用户请求的任务，但是不需要精确到毫秒级。例如如果用户请求打开电子邮件App来查看邮件 次高级
         case NSQualityOfServiceUserInitiated: return QOS_CLASS_USER_INITIATED;
-            // 周期性的用户请求任务。比如，电子邮件App可能被设置成每5分钟自动检测新邮件。但是在系统资源极度匮乏的时候，将这个周期性的任务推迟几分钟也没有大碍
+            // 周期性的用户请求任务。比如，电子邮件App可能被设置成每5分钟自动检测新邮件。但是在系统资源极度匮乏的时候，将这个周期性的任务推迟几分钟也没有大碍  普通优先级
         case NSQualityOfServiceUtility: return QOS_CLASS_UTILITY;
-            // 后台任务，对这些任务用户可能并不会察觉，比如电子邮件App对邮件进行索引以方便搜索
+            // 后台任务，对这些任务用户可能并不会察觉，比如电子邮件App对邮件进行索引以方便搜索 后台优先级
         case NSQualityOfServiceBackground: return QOS_CLASS_BACKGROUND;
-            // 默认的优先级
+            // 默认的优先级 
         case NSQualityOfServiceDefault: return QOS_CLASS_DEFAULT;
         default: return QOS_CLASS_UNSPECIFIED;
     }
