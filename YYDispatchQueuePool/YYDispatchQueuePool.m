@@ -28,10 +28,15 @@ static inline dispatch_queue_priority_t NSQualityOfServiceToDispatchPriority(NSQ
 
 static inline qos_class_t NSQualityOfServiceToQOSClass(NSQualityOfService qos) {
     switch (qos) {
+            // 和图形处理相关的任务，比如滚动和动画
         case NSQualityOfServiceUserInteractive: return QOS_CLASS_USER_INTERACTIVE;
+            // 用户请求的任务，但是不需要精确到毫秒级。例如如果用户请求打开电子邮件App来查看邮件
         case NSQualityOfServiceUserInitiated: return QOS_CLASS_USER_INITIATED;
+            // 周期性的用户请求任务。比如，电子邮件App可能被设置成每5分钟自动检测新邮件。但是在系统资源极度匮乏的时候，将这个周期性的任务推迟几分钟也没有大碍
         case NSQualityOfServiceUtility: return QOS_CLASS_UTILITY;
+            // 后台任务，对这些任务用户可能并不会察觉，比如电子邮件App对邮件进行索引以方便搜索
         case NSQualityOfServiceBackground: return QOS_CLASS_BACKGROUND;
+            // 默认的优先级
         case NSQualityOfServiceDefault: return QOS_CLASS_DEFAULT;
         default: return QOS_CLASS_UNSPECIFIED;
     }
@@ -39,9 +44,9 @@ static inline qos_class_t NSQualityOfServiceToQOSClass(NSQualityOfService qos) {
 
 typedef struct {
     const char *name;
-    void **queues;
-    uint32_t queueCount;
-    int32_t counter;
+    void **queues;       // 数组queues，存放队列吧
+    uint32_t queueCount; // 总数
+    int32_t counter;     // 用于++，循环的从queues中获取queue
 } YYDispatchContext;
 
 static YYDispatchContext *YYDispatchContextCreate(const char *name,
@@ -57,7 +62,9 @@ static YYDispatchContext *YYDispatchContextCreate(const char *name,
     if ([UIDevice currentDevice].systemVersion.floatValue >= 8.0) {
         dispatch_qos_class_t qosClass = NSQualityOfServiceToQOSClass(qos);
         for (NSUInteger i = 0; i < queueCount; i++) {
+            // 根据 qosClass 生成对应的串行队列的属性
             dispatch_queue_attr_t attr = dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, qosClass, 0);
+            // 生成队列
             dispatch_queue_t queue = dispatch_queue_create(name, attr);
             context->queues[i] = (__bridge_retained void *)(queue);
         }
@@ -76,6 +83,7 @@ static YYDispatchContext *YYDispatchContextCreate(const char *name,
     return context;
 }
 
+// 是否context中的队列
 static void YYDispatchContextRelease(YYDispatchContext *context) {
     if (!context) return;
     if (context->queues) {
@@ -90,17 +98,20 @@ static void YYDispatchContextRelease(YYDispatchContext *context) {
         context->queues = NULL;
     }
     if (context->name) free((void *)context->name);
+    // 释放数据结构
     free(context);
 }
 
 static dispatch_queue_t YYDispatchContextGetQueue(YYDispatchContext *context) {
     uint32_t counter = (uint32_t)OSAtomicIncrement32(&context->counter);
+    // 分配队列 [counter % context->queueCount] 循环队列的取反
     void *queue = context->queues[counter % context->queueCount];
     return (__bridge dispatch_queue_t)(queue);
 }
 
 
 static YYDispatchContext *YYDispatchContextGetForQOS(NSQualityOfService qos) {
+    // context存放着不同优先级的context数组
     static YYDispatchContext *context[5] = {0};
     switch (qos) {
         case NSQualityOfServiceUserInteractive: {

@@ -33,7 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
  Creates and returns a dispatch queue pool.
  @param name       The name of the pool.
  @param queueCount Maxmium queue count, should in range (1, 32).
- @param qos        Queue quality of service (QOS).
+ @param qos        Queue quality of service (QOS).  线程的优先级
  @return A new pool, or nil if an error occurs.
  */
 - (instancetype)initWithName:(nullable NSString *)name queueCount:(NSUInteger)queueCount qos:(NSQualityOfService)qos;
